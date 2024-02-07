@@ -11,6 +11,7 @@ app_activate (GApplication *app) {
   // Adding File menu to the menubar
   GMenu *menubar = g_menu_new ();
   GMenuItem *menu_item_file = g_menu_item_new ("File", NULL);
+  // Creating a submenu
   GMenu *menu = g_menu_new ();
   GMenuItem *menu_item_save = g_menu_item_new ("Save", NULL);
   g_menu_append_item (menu, menu_item_save);
