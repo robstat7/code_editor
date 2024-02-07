@@ -6,7 +6,20 @@ app_activate (GApplication *app) {
   GtkWidget *tv;
   GtkTextBuffer *tb;
 
-  win = gtk_application_window_new (GTK_APPLICATION (app));
+  GtkApplication *application = GTK_APPLICATION (app);
+
+  // Adding File menu to the menubar
+  GMenu *menubar = g_menu_new ();
+  GMenuItem *menu_item_menu = g_menu_item_new ("File", NULL);
+  GMenu *menu = g_menu_new ();
+  g_menu_item_set_submenu (menu_item_menu, G_MENU_MODEL (menu));
+  g_object_unref (menu);
+  g_menu_append_item (menubar, menu_item_menu);
+  g_object_unref (menu_item_menu);
+
+  gtk_application_set_menubar (GTK_APPLICATION (application), G_MENU_MODEL (menubar)); 
+  
+  win = gtk_application_window_new (GTK_APPLICATION (application));
   gtk_window_set_title (GTK_WINDOW (win), "Code Editor");
   gtk_window_set_default_size (GTK_WINDOW (win), 400, 300);
 
@@ -16,6 +29,7 @@ app_activate (GApplication *app) {
 
   gtk_window_set_child (GTK_WINDOW (win), tv);
 
+  gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
   gtk_window_present (GTK_WINDOW (win));
 }
 
