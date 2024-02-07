@@ -12,6 +12,9 @@ app_activate (GApplication *app) {
   GMenu *menubar = g_menu_new ();
   GMenuItem *menu_item_menu = g_menu_item_new ("File", NULL);
   GMenu *menu = g_menu_new ();
+  GMenuItem *menu_item_save = g_menu_item_new ("Save", NULL);
+  g_menu_append_item (menu, menu_item_save);
+  g_object_unref (menu_item_save);
   g_menu_item_set_submenu (menu_item_menu, G_MENU_MODEL (menu));
   g_object_unref (menu);
   g_menu_append_item (menubar, menu_item_menu);
