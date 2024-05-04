@@ -13,9 +13,9 @@ static void app_activate (GApplication *app)
 	GMenuItem *menu_item_file = g_menu_item_new ("File", NULL);
 	// Creating a submenu
 	GMenu *menu = g_menu_new ();
-	GMenuItem *menu_item_save = g_menu_item_new ("Save", NULL);
-	g_menu_append_item (menu, menu_item_save);
-	g_object_unref (menu_item_save);
+	GMenuItem *menu_item_save_as = g_menu_item_new ("Save As...", NULL);
+	g_menu_append_item (menu, menu_item_save_as);
+	g_object_unref (menu_item_save_as);
 	g_menu_item_set_submenu (menu_item_file, G_MENU_MODEL (menu));
 	g_object_unref (menu);
 	g_menu_append_item (menubar, menu_item_file);
