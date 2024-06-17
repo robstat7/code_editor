@@ -37,6 +37,12 @@ static void save_dialog(GObject *source_object, GAsyncResult *res, gpointer data
 	if (((file = gtk_file_dialog_save_finish (dialog, res, &err)) != NULL) && save_file(file, tb, GTK_WINDOW (win))) {
 		printf("Done!!!\n");
 	}
+	if (err) {
+    	alert_dialog = gtk_alert_dialog_new ("%s", err->message);
+    	gtk_alert_dialog_show (alert_dialog, GTK_WINDOW (win));
+    	g_object_unref (alert_dialog);
+    	g_clear_error (&err);
+  }
 }
 
 static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
