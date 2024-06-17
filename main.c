@@ -1,4 +1,20 @@
 #include <gtk/gtk.h>
+#include <stdio.h>
+
+static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer app)
+{
+	printf("Save as button clicked!!!\n");
+}
+
+static void connect_actions(GApplication *app, GtkTextBuffer *tb)
+{
+	// create an action saveas
+	GSimpleAction *act_saveas = g_simple_action_new ("saveas", NULL);
+	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_saveas));
+	
+	// connect the action saveas 
+	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), app);
+}
 
 static void app_activate (GApplication *app)
 {
@@ -11,9 +27,9 @@ static void app_activate (GApplication *app)
 	// Adding File menu to the menubar
 	GMenu *menubar = g_menu_new ();
 	GMenuItem *menu_item_file = g_menu_item_new ("File", NULL);
-	// Creating a submenu
+	// Creating Save As submenu in the File menu
 	GMenu *menu = g_menu_new ();
-	GMenuItem *menu_item_save_as = g_menu_item_new ("Save As...", NULL);
+	GMenuItem *menu_item_save_as = g_menu_item_new ("Save As...", "app.saveas");
 	g_menu_append_item (menu, menu_item_save_as);
 	g_object_unref (menu_item_save_as);
 	g_menu_item_set_submenu (menu_item_file, G_MENU_MODEL (menu));
@@ -35,6 +51,9 @@ static void app_activate (GApplication *app)
 	
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
 	gtk_window_present (GTK_WINDOW (win));
+
+	// connect submenu items to the actions
+	connect_actions(app, tb);
 }
 
 int main (int argc, char **argv)
