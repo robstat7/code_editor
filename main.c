@@ -1,8 +1,42 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 
+static gboolean save_file (GFile *file, GtkTextBuffer *tb, GtkWindow *win) {
+  GtkTextIter start_iter;
+  GtkTextIter end_iter;
+  char *contents;
+  gboolean stat;
+  GtkAlertDialog *alert_dialog;
+  GError *err = NULL;
+
+  gtk_text_buffer_get_bounds (tb, &start_iter, &end_iter);
+  contents = gtk_text_buffer_get_text (tb, &start_iter, &end_iter, FALSE);
+  stat = g_file_replace_contents (file, contents, strlen (contents), NULL, TRUE, G_FILE_CREATE_NONE, NULL, NULL, &err);
+  if (stat)
+    gtk_text_buffer_set_modified (tb, FALSE);
+  else {
+    alert_dialog = gtk_alert_dialog_new ("%s", err->message);
+    gtk_alert_dialog_show (alert_dialog, win);
+    g_object_unref (alert_dialog);
+    g_error_free (err);
+  }
+  g_free (contents);
+  return stat;
+}
+
 static void save_dialog(GObject *source_object, GAsyncResult *res, gpointer data)
 {
+	GtkFileDialog *dialog = GTK_FILE_DIALOG (source_object);
+	GtkWidget *tv = data;
+  	GtkTextBuffer *tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+  	GFile *file;
+  	GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+  	GError *err = NULL;
+  	GtkAlertDialog *alert_dialog;
+
+	if (((file = gtk_file_dialog_save_finish (dialog, res, &err)) != NULL) && save_file(file, tb, GTK_WINDOW (win))) {
+		printf("Done!!!\n");
+	}
 }
 
 static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
