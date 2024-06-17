@@ -95,6 +95,11 @@ static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 
 }
 
+static void open_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	printf("Open submenu clicked!!!\n");
+}
+
 static void connect_actions(GApplication *app, GtkWidget *tv)
 {
 	// create an action saveas
@@ -104,6 +109,13 @@ static void connect_actions(GApplication *app, GtkWidget *tv)
 	// create an action save
 	GSimpleAction *act_save = g_simple_action_new ("save", NULL);
 	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_save));
+
+	// create an action open
+	GSimpleAction *act_open = g_simple_action_new("open", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_open));
+
+	// connect the action open
+	g_signal_connect (act_open, "activate", G_CALLBACK (open_activated), tv);
 
 	// connect the action saveas 
 	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
@@ -129,7 +141,7 @@ static void app_activate (GApplication *app)
 	GMenu *menu = g_menu_new ();
 
 	// create "open" submenu in the "file" menu
-	GMenuItem *menu_item_open = g_menu_item_new("Open...", NULL);
+	GMenuItem *menu_item_open = g_menu_item_new("Open...", "app.open");
 	g_menu_append_item(menu, menu_item_open);
 	g_object_unref(menu_item_open);
 
