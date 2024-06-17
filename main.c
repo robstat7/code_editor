@@ -45,22 +45,41 @@ static void save_dialog(GObject *source_object, GAsyncResult *res, gpointer data
   }
 }
 
+
+void ce_text_view_saveas(GtkWidget *tv)
+{
+         GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+         GtkFileDialog *dialog;
+
+         dialog = gtk_file_dialog_new ();
+         gtk_file_dialog_save (dialog, GTK_WINDOW (win), NULL, save_dialog, tv);
+         g_object_unref (dialog);
+}
+
 static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
 	// printf("Save as button clicked!!!\n");
 
 	GtkWidget *tv = user_data;
-	GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
-  	GtkFileDialog *dialog;
-
-  	dialog = gtk_file_dialog_new ();
-  	gtk_file_dialog_save (dialog, GTK_WINDOW (win), NULL, save_dialog, tv);
-  	g_object_unref (dialog);
+  
+	ce_text_view_saveas (tv);
 }
 
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-	printf("Save submenu clicked!!!\n");
+	// printf("Save submenu clicked!!!\n");
+	
+// GtkWidget *tv = user_data;
+// GtkTextBuffer *tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+//   GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+// 
+//   if (! gtk_text_buffer_get_modified (tb))
+//     return; /* no need to save it */
+//   else if (tv->file == NULL)
+//     tfe_text_view_saveas (tv);
+//   else
+//     save_file (tv->file, tb, GTK_WINDOW (win));
+	
 }
 
 static void connect_actions(GApplication *app, GtkWidget *tv)
