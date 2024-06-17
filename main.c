@@ -117,6 +117,8 @@ static void app_activate (GApplication *app)
 	GtkWidget *win;
 	GtkWidget *tv;
 	GtkTextBuffer *tb;
+	GtkCssProvider *provider;
+	GtkStyleContext *context;
 	
 	GtkApplication *application = GTK_APPLICATION (app);
 	
@@ -150,7 +152,21 @@ static void app_activate (GApplication *app)
 	tv = gtk_text_view_new ();
 	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
-	
+
+	/* Change default font and color throughout the textview widget */
+	provider = gtk_css_provider_new ();
+	gtk_css_provider_load_from_data (provider,
+	                                 "textview {"
+	                                 " font: 14px consolas regular;"
+	                                 "  color: black;"
+	                                 "}",
+	                                 -1);
+	context = gtk_widget_get_style_context (tv);
+	gtk_style_context_add_provider (context,
+	                                GTK_STYLE_PROVIDER (provider),
+	                                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+
 	gtk_window_set_child (GTK_WINDOW (win), tv);
 	
 	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
