@@ -1,19 +1,31 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 
-static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer app)
+static void save_dialog(GObject *source_object, GAsyncResult *res, gpointer data)
 {
-	printf("Save as button clicked!!!\n");
 }
 
-static void connect_actions(GApplication *app, GtkTextBuffer *tb)
+static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	// printf("Save as button clicked!!!\n");
+
+	GtkWidget *tv = user_data;
+	GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+  	GtkFileDialog *dialog;
+
+  	dialog = gtk_file_dialog_new ();
+  	gtk_file_dialog_save (dialog, GTK_WINDOW (win), NULL, save_dialog, tv);
+  	g_object_unref (dialog);
+}
+
+static void connect_actions(GApplication *app, GtkWidget *tv)
 {
 	// create an action saveas
 	GSimpleAction *act_saveas = g_simple_action_new ("saveas", NULL);
 	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_saveas));
 	
 	// connect the action saveas 
-	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), app);
+	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
 }
 
 static void app_activate (GApplication *app)
@@ -53,7 +65,7 @@ static void app_activate (GApplication *app)
 	gtk_window_present (GTK_WINDOW (win));
 
 	// connect submenu items to the actions
-	connect_actions(app, tb);
+	connect_actions(app, tv);
 }
 
 int main (int argc, char **argv)
