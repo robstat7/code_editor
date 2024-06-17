@@ -126,8 +126,14 @@ static void app_activate (GApplication *app)
 	GMenu *menubar = g_menu_new ();
 	GMenuItem *menu_item_file = g_menu_item_new ("File", NULL);
 
-	// Creating Save As submenu in the File menu
 	GMenu *menu = g_menu_new ();
+
+	// create "open" submenu in the "file" menu
+	GMenuItem *menu_item_open = g_menu_item_new("Open...", NULL);
+	g_menu_append_item(menu, menu_item_open);
+	g_object_unref(menu_item_open);
+
+	// Creating Save As submenu in the File menu
 	GMenuItem *menu_item_save_as = g_menu_item_new ("Save As...", "app.saveas");
 	g_menu_append_item (menu, menu_item_save_as);
 	g_object_unref (menu_item_save_as);
