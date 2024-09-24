@@ -1,4 +1,85 @@
 #include <gtk/gtk.h>
+#include <stdio.h>
+
+void ce_text_view_saveas(GtkWidget *tv)
+{
+	GtkWidget *dialog;
+	GtkFileChooser *chooser;
+	GtkWidget *win;
+	GtkTextBuffer *buffer;
+	GtkTextIter start, end;
+	gchar* text;
+	GError *err = NULL;
+	gboolean result;
+    
+    
+    win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+
+    // Create the file chooser dialog
+    dialog = gtk_file_chooser_dialog_new("Save File",
+                                         GTK_WINDOW(win),
+                                         GTK_FILE_CHOOSER_ACTION_SAVE,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Save", GTK_RESPONSE_ACCEPT,
+                                         NULL);
+
+    // Show the dialog and wait for a response
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        // Get the filename
+        chooser = GTK_FILE_CHOOSER(dialog);
+        char *filename = gtk_file_chooser_get_filename(chooser);
+
+        // Here you can handle the file saving logic
+        g_print("File to save: %s\n", filename);
+
+
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	gtk_text_buffer_get_start_iter (buffer, &start);
+	gtk_text_buffer_get_end_iter(buffer, &end);
+	text = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+	gtk_text_buffer_set_modified (buffer, FALSE);
+
+	if (filename != NULL)
+    		result = g_file_set_contents (filename, text, -1, &err);
+
+	if (result == FALSE)
+	{
+    		/* error saving file, show message to user */
+    		// error_message (err->message);
+    		g_error_free (err);
+	}
+
+	g_free (text);
+
+        // Free the filename string
+        g_free(filename);
+    }
+
+    // Destroy the dialog after use
+    gtk_widget_destroy(dialog);
+}
+
+static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	printf("Save as button clicked!!!\n");
+
+	GtkWidget *tv = user_data;
+  
+	ce_text_view_saveas (tv);
+}
+
+static void connect_actions(GtkApplication *app, GtkWidget *tv)
+{
+	GSimpleAction *act_saveas;
+
+	// create an action saveas
+	act_saveas = g_simple_action_new ("saveas", NULL);
+	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_saveas));
+
+	// connect the action saveas 
+	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
+}
+
 
 static void activate(GtkApplication *app, gpointer user_data)
 {
@@ -50,6 +131,9 @@ static void activate(GtkApplication *app, gpointer user_data)
 	gtk_container_add(GTK_CONTAINER(win), tv);
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
+
+	// connect submenu items to the actions
+	connect_actions(app, tv);
 }
 
 int main(int argc, char **argv)
