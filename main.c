@@ -4,6 +4,29 @@
 char *current_filename = NULL;
 char *filename;
 
+static gboolean open_file(char *filename, GtkTextBuffer *tb)
+{	
+	FILE *file;
+	unsigned long file_size;
+	char *text;
+
+	file = fopen(filename, "r");
+	// Measure the file and allocate memory
+	fseek(file, 0, SEEK_END);
+	file_size = ftell(file);
+	rewind(file);
+	
+	text = (char*)malloc(file_size);
+
+	// Save the contents of the file to a variable
+	fread(text, sizeof(char), file_size, file);
+
+	gtk_text_buffer_set_text(tb, text, file_size);
+
+	free(text);
+	fclose(file);
+}
+
 static gboolean save_file(char *filename, GtkTextBuffer *tb)
 {
 	GtkTextIter start, end;
@@ -92,6 +115,26 @@ void ce_text_view_save(GtkWidget *tv)
 	}
 }
 
+void ce_open(GtkWidget *tv)
+{
+	GtkWidget *filechooserdialog;
+	GtkTextBuffer *tb;
+
+	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
+
+	filechooserdialog = gtk_file_chooser_dialog_new("FileChooserDialog", NULL, GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+
+	gtk_dialog_run(GTK_DIALOG(filechooserdialog));
+
+	current_filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filechooserdialog));
+
+	g_print("Selected file: %s", current_filename);
+
+	open_file(current_filename, tb);
+
+	gtk_widget_destroy(filechooserdialog);
+}
+
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
 	printf("Save submenu clicked!!!\n");
@@ -110,6 +153,15 @@ static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointe
 	ce_text_view_saveas (tv);
 }
 
+static void open_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	printf("Open submenu clicked!!!\n");
+	
+	GtkWidget *tv = user_data;
+
+	ce_open(tv);
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *tv)
 {
 	GSimpleAction *act_saveas, *act_save;
@@ -122,6 +174,12 @@ static void connect_actions(GtkApplication *app, GtkWidget *tv)
 	act_save = g_simple_action_new ("save", NULL);
 	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_save));
 
+	// create an action open
+	GSimpleAction *act_open = g_simple_action_new("open", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_open));
+
+	// connect the action open
+	g_signal_connect (act_open, "activate", G_CALLBACK (open_activated), tv);
 
 	// connect the action saveas 
 	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
@@ -145,6 +203,9 @@ static void activate(GtkApplication *app, gpointer user_data)
 	win = gtk_application_window_new(GTK_APPLICATION (application));
 	gtk_window_set_title (GTK_WINDOW (win), "Code Editor");
 	gtk_window_set_default_size (GTK_WINDOW (win), 800, 600);
+
+	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(win), scrolledwindow);
 
 	// Adding File menu to the menubar
 	menubar = g_menu_new ();
@@ -179,7 +240,9 @@ static void activate(GtkApplication *app, gpointer user_data)
 	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
 
-	gtk_container_add(GTK_CONTAINER(win), tv);
+	gtk_container_add(GTK_CONTAINER(scrolledwindow), tv);
+
+	// gtk_container_add(GTK_CONTAINER(win), tv);
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
 
