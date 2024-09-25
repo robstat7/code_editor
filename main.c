@@ -1,16 +1,47 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 
+char *current_filename = NULL;
+char *filename;
+
+static gboolean save_file(char *filename, GtkTextBuffer *tb)
+{
+	GtkTextIter start, end;
+	gchar* text;
+	GError *err = NULL;
+	gboolean result;
+
+	gtk_text_buffer_get_start_iter (tb, &start);
+	gtk_text_buffer_get_end_iter(tb, &end);
+	text = gtk_text_buffer_get_text (tb, &start, &end, FALSE);
+	gtk_text_buffer_set_modified (tb, FALSE);
+
+    	result = g_file_set_contents (filename, text, -1, &err);
+
+	if (result == FALSE)
+	{
+    		/* error saving file, show message to user */
+    		// error_message (err->message);
+    		g_error_free (err);
+	}
+	else
+	{
+		gtk_text_buffer_set_modified (tb, FALSE);
+	}
+
+
+	g_free (text);
+	
+	return result;
+}
+
+
 void ce_text_view_saveas(GtkWidget *tv)
 {
 	GtkWidget *dialog;
 	GtkFileChooser *chooser;
 	GtkWidget *win;
-	GtkTextBuffer *buffer;
-	GtkTextIter start, end;
-	gchar* text;
-	GError *err = NULL;
-	gboolean result;
+	GtkTextBuffer *tb;
     
     
     win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
@@ -27,36 +58,47 @@ void ce_text_view_saveas(GtkWidget *tv)
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         // Get the filename
         chooser = GTK_FILE_CHOOSER(dialog);
-        char *filename = gtk_file_chooser_get_filename(chooser);
+        filename = gtk_file_chooser_get_filename(chooser);
 
         // Here you can handle the file saving logic
-        g_print("File to save: %s\n", filename);
+        g_print("File to save as: %s\n", filename);
 
 
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
-	gtk_text_buffer_get_start_iter (buffer, &start);
-	gtk_text_buffer_get_end_iter(buffer, &end);
-	text = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
-	gtk_text_buffer_set_modified (buffer, FALSE);
-
-	if (filename != NULL)
-    		result = g_file_set_contents (filename, text, -1, &err);
-
-	if (result == FALSE)
-	{
-    		/* error saving file, show message to user */
-    		// error_message (err->message);
-    		g_error_free (err);
+	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	
+	if(save_file(filename, tb)) {
+		current_filename = filename;
+        	g_print("cur_fn: %s\n", current_filename);
 	}
 
-	g_free (text);
-
-        // Free the filename string
-        g_free(filename);
     }
 
     // Destroy the dialog after use
     gtk_widget_destroy(dialog);
+}
+
+void ce_text_view_save(GtkWidget *tv)
+{
+	GtkTextBuffer *tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+
+	if(!gtk_text_buffer_get_modified(tb)) {
+		return;		/* no need to save it */
+	} else if(current_filename == NULL) {
+		ce_text_view_saveas(tv);
+	} else {
+        	g_print("File to save: %s\n", current_filename);
+		save_file(current_filename, tb);
+	}
+}
+
+static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	printf("Save submenu clicked!!!\n");
+	
+	GtkWidget *tv = user_data;
+
+	ce_text_view_save(tv);
 }
 
 static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
@@ -70,14 +112,23 @@ static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointe
 
 static void connect_actions(GtkApplication *app, GtkWidget *tv)
 {
-	GSimpleAction *act_saveas;
+	GSimpleAction *act_saveas, *act_save;
 
 	// create an action saveas
 	act_saveas = g_simple_action_new ("saveas", NULL);
 	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_saveas));
 
+	// create an action save
+	act_save = g_simple_action_new ("save", NULL);
+	g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (act_save));
+
+
 	// connect the action saveas 
 	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
+
+	// connect the action save
+	g_signal_connect (act_save, "activate", G_CALLBACK (save_activated), tv);
+
 }
 
 
