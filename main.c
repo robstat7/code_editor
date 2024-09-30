@@ -135,6 +135,21 @@ void ce_open(GtkWidget *tv)
 	gtk_widget_destroy(filechooserdialog);
 }
 
+void ce_new(GtkWidget *tv)
+{
+	GtkTextBuffer *tb;
+	GtkTextIter start, end;
+
+	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
+
+	gtk_text_buffer_get_start_iter (tb, &start);
+	gtk_text_buffer_get_end_iter(tb, &end);
+
+	gtk_text_buffer_delete(tb, &start, &end);
+
+	current_filename = "untitled";
+}
+
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
 	printf("Save submenu clicked!!!\n");
@@ -162,9 +177,22 @@ static void open_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 	ce_open(tv);
 }
 
+static void new_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	printf("New submenu clicked!!!\n");
+	
+	GtkWidget *tv = user_data;
+
+	ce_new(tv);
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *tv)
 {
-	GSimpleAction *act_saveas, *act_save;
+	GSimpleAction *act_saveas, *act_save, *act_new;
+
+	// create an action new 
+	act_new = g_simple_action_new("new", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_new));
 
 	// create an action saveas
 	act_saveas = g_simple_action_new ("saveas", NULL);
@@ -177,6 +205,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *tv)
 	// create an action open
 	GSimpleAction *act_open = g_simple_action_new("open", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_open));
+	
+	// connect the action new
+	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), tv);
 
 	// connect the action open
 	g_signal_connect (act_open, "activate", G_CALLBACK (open_activated), tv);
@@ -186,7 +217,6 @@ static void connect_actions(GtkApplication *app, GtkWidget *tv)
 
 	// connect the action save
 	g_signal_connect (act_save, "activate", G_CALLBACK (save_activated), tv);
-
 }
 
 
@@ -197,7 +227,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GtkTextBuffer *tb;
 	GtkApplication *application;
 	GMenu *menubar, *menu;
-	GMenuItem *menu_item_file, *menu_item_open, *menu_item_save_as, *menu_item_save;
+	GMenuItem *menu_item_file, *menu_item_open, *menu_item_save_as, *menu_item_save, *menu_item;
 
 	application = GTK_APPLICATION (app);
 	win = gtk_application_window_new(GTK_APPLICATION (application));
@@ -213,6 +243,11 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 	menu = g_menu_new ();
 
+	// Creating New submenu in the File menu
+	menu_item = g_menu_item_new ("New", "app.new");
+	g_menu_append_item (menu, menu_item);
+	g_object_unref (menu_item);
+
 	// create "open" submenu in the "file" menu
 	menu_item_open = g_menu_item_new("Open...", "app.open");
 	g_menu_append_item(menu, menu_item_open);
@@ -227,6 +262,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	menu_item_save = g_menu_item_new ("Save", "app.save");
 	g_menu_append_item (menu, menu_item_save);
 	g_object_unref (menu_item_save);
+	
 	
 	g_menu_item_set_submenu (menu_item_file, G_MENU_MODEL (menu));
 	g_object_unref (menu);
