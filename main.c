@@ -182,41 +182,85 @@ void ce_new(GtkWidget *tv)
 
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *tv;
+
 	printf("Save submenu clicked!!!\n");
 	
-	GtkWidget *tv = user_data;
+	notebook = user_data;
+
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+
+	// Get the child of the scrolled window (which is the text view)
+	tv = gtk_bin_get_child(GTK_BIN(scrolled_window));
 
 	ce_text_view_save(tv);
 }
 
 static void saveas_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-	printf("Save as button clicked!!!\n");
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *tv;
 
-	GtkWidget *tv = user_data;
-  
-	ce_text_view_saveas (tv);
+	printf("Saveas submenu clicked!!!\n");
+	
+	notebook = user_data;
+
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+
+	// Get the child of the scrolled window (which is the text view)
+	tv = gtk_bin_get_child(GTK_BIN(scrolled_window));
+
+	ce_text_view_saveas(tv);
 }
 
 static void open_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *tv;
+
 	printf("Open submenu clicked!!!\n");
 	
-	GtkWidget *tv = user_data;
+	notebook = user_data;
+
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+
+	// Get the child of the scrolled window (which is the text view)
+	tv = gtk_bin_get_child(GTK_BIN(scrolled_window));
 
 	ce_open(tv);
 }
 
 static void new_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-	printf("New submenu clicked!!!\n");
-	
-	GtkWidget *tv = user_data;
+	gint current_page;
+        GtkWidget *notebook, *scrolled_window, *tv;
+                                                                                           
+        printf("New submenu clicked!!!\n");
+        
+        notebook = user_data;
+                                                                                           
+        current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+                                                                                           
+        // Get the current page widget (which is the scrolled window)
+        scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+                                                                                           
+        // Get the child of the scrolled window (which is the text view)
+        tv = gtk_bin_get_child(GTK_BIN(scrolled_window));
 
 	ce_new(tv);
 }
 
-static void connect_actions(GtkApplication *app, GtkWidget *tv)
+static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_saveas, *act_save, *act_new;
 
@@ -235,18 +279,18 @@ static void connect_actions(GtkApplication *app, GtkWidget *tv)
 	// create an action open
 	GSimpleAction *act_open = g_simple_action_new("open", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_open));
-	
+
 	// connect the action new
-	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), tv);
+	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
 
 	// connect the action open
-	g_signal_connect (act_open, "activate", G_CALLBACK (open_activated), tv);
+	g_signal_connect (act_open, "activate", G_CALLBACK (open_activated), notebook);
 
 	// connect the action saveas 
-	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), tv);
+	g_signal_connect (act_saveas, "activate", G_CALLBACK (saveas_activated), notebook);
 
 	// connect the action save
-	g_signal_connect (act_save, "activate", G_CALLBACK (save_activated), tv);
+	g_signal_connect (act_save, "activate", G_CALLBACK (save_activated), notebook);
 }
 
 
@@ -349,7 +393,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	gtk_widget_show_all(win);
 
 	// connect submenu items to the actions
-	// connect_actions(app, tv);
+	connect_actions(app, notebook);
 }
 
 int main(int argc, char **argv)
