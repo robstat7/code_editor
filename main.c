@@ -31,6 +31,8 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 	gint page_num;
 	GtkSourceLanguageManager *lang_manager;
     	GtkSourceLanguage *language;
+	GtkCssProvider *provider;
+	GtkStyleContext *context;
 	
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
@@ -67,6 +69,23 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 	// printf("page_num = %d\n", page_num);
 
 	current_filename[page_num] = "Untitled";
+
+
+	/* Change default font and color throughout the textview widget */
+	provider = gtk_css_provider_new ();
+	gtk_css_provider_load_from_data (provider,
+	                                 "textview {"
+	                                 " font: 14px consolas regular;"
+	                                 "  color: black;"
+	                                 "}",
+	                                 -1,
+					 NULL);
+	context = gtk_widget_get_style_context (sv);
+	gtk_style_context_add_provider (context,
+	                                GTK_STYLE_PROVIDER (provider),
+	                                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+
 
 	// Switch to the newly added tab
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_num);
