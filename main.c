@@ -1,7 +1,8 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include <string.h>
 
-char *current_filename = NULL;
+char *current_filename[21];
 char *filename;
 
 static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
@@ -20,10 +21,14 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 
 	// Create a label for the tab
     	label = gtk_label_new("Untitled");
-
+	
 	// Add the scrolled window (with text view) as a new tab
 	page_num = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scrolled_window, label);
 	gtk_widget_show_all(scrolled_window);
+
+	// printf("page_num = %d\n", page_num);
+
+	current_filename[page_num] = "Untitled";
 
 	// Switch to the newly added tab
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_num);
@@ -91,13 +96,18 @@ static gboolean save_file(char *filename, GtkTextBuffer *tb)
 
 void ce_text_view_saveas(GtkWidget *tv)
 {
-	GtkWidget *dialog;
+	GtkWidget *dialog, *notebook;
 	GtkFileChooser *chooser;
 	GtkWidget *win;
 	GtkTextBuffer *tb;
+	gint current_page;
     
     
-    win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+    	win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
+
+    	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
+
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
     // Create the file chooser dialog
     dialog = gtk_file_chooser_dialog_new("Save File",
@@ -120,8 +130,8 @@ void ce_text_view_saveas(GtkWidget *tv)
 	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
 	
 	if(save_file(filename, tb)) {
-		current_filename = filename;
-        	g_print("cur_fn: %s\n", current_filename);
+		current_filename[current_page] = filename;
+        	g_print("cur_fn: %s\n", current_filename[current_page]);
 	}
 
     }
@@ -132,23 +142,33 @@ void ce_text_view_saveas(GtkWidget *tv)
 
 void ce_text_view_save(GtkWidget *tv)
 {
+	GtkWidget *notebook;
+	gint current_page;
+
 	GtkTextBuffer *tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
 	GtkWidget *win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
 
+    	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
 	if(!gtk_text_buffer_get_modified(tb)) {
 		return;		/* no need to save it */
-	} else if(current_filename == NULL) {
+	} else if(strncmp(current_filename[current_page],"Untitled", 9) == 0) {
 		ce_text_view_saveas(tv);
 	} else {
-        	g_print("File to save: %s\n", current_filename);
-		save_file(current_filename, tb);
+        	g_print("File to save: %s\n", current_filename[current_page]);
+		save_file(current_filename[current_page], tb);
 	}
 }
 
 void ce_open(GtkWidget *tv)
 {
-	GtkWidget *filechooserdialog;
+	GtkWidget *filechooserdialog, *notebook;
 	GtkTextBuffer *tb;
+	gint current_page;
+
+	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
@@ -156,11 +176,11 @@ void ce_open(GtkWidget *tv)
 
 	gtk_dialog_run(GTK_DIALOG(filechooserdialog));
 
-	current_filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filechooserdialog));
+	current_filename[current_page] = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filechooserdialog));
 
-	g_print("Selected file: %s", current_filename);
+	g_print("Selected file: %s", current_filename[current_page]);
 
-	open_file(current_filename, tb);
+	open_file(current_filename[current_page], tb);
 
 	gtk_widget_destroy(filechooserdialog);
 }
@@ -169,6 +189,11 @@ void ce_new(GtkWidget *tv)
 {
 	GtkTextBuffer *tb;
 	GtkTextIter start, end;
+	GtkWidget *notebook;
+	gint current_page;
+
+	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
@@ -177,7 +202,7 @@ void ce_new(GtkWidget *tv)
 
 	gtk_text_buffer_delete(tb, &start, &end);
 
-	current_filename = "untitled";
+	current_filename[current_page] = "Untitled";
 }
 
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
