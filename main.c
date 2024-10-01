@@ -11,6 +11,8 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 	GtkWidget *scrolled_window, *label, *sv;
 	GtkSourceBuffer *sb;
 	gint page_num;
+	GtkSourceLanguageManager *lang_manager;
+    	GtkSourceLanguage *language;
 	
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
@@ -24,6 +26,17 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 	// Enable line numbers
     	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(sv), TRUE);
 
+	// Set the language for syntax highlighting
+    lang_manager = gtk_source_language_manager_get_default();
+    language = gtk_source_language_manager_get_language(lang_manager, "c");  // For C programming
+
+    // Apply the language to the source buffer
+    gtk_source_buffer_set_language(sb, language);
+
+    // Enable syntax highlighting
+    gtk_source_buffer_set_highlight_syntax(sb, TRUE);
+
+	// Add the source view to the scrolled window
 	gtk_container_add(GTK_CONTAINER(scrolled_window), sv);
 
 	// Create a label for the tab
