@@ -96,7 +96,7 @@ static gboolean save_file(char *filename, GtkTextBuffer *tb)
 
 void ce_text_view_saveas(GtkWidget *tv)
 {
-	GtkWidget *dialog, *notebook;
+	GtkWidget *dialog, *notebook, *page;
 	GtkFileChooser *chooser;
 	GtkWidget *win;
 	GtkTextBuffer *tb;
@@ -135,6 +135,10 @@ void ce_text_view_saveas(GtkWidget *tv)
 	}
 
     }
+   
+	// Update the notebook page label
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), page, current_filename[current_page]);
 
     // Destroy the dialog after use
     gtk_widget_destroy(dialog);
@@ -163,7 +167,7 @@ void ce_text_view_save(GtkWidget *tv)
 
 void ce_open(GtkWidget *tv)
 {
-	GtkWidget *filechooserdialog, *notebook;
+	GtkWidget *filechooserdialog, *notebook, *page;
 	GtkTextBuffer *tb;
 	gint current_page;
 
@@ -182,6 +186,10 @@ void ce_open(GtkWidget *tv)
 
 	open_file(current_filename[current_page], tb);
 
+	// update the notebook page label
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), page, current_filename[current_page]);
+
 	gtk_widget_destroy(filechooserdialog);
 }
 
@@ -189,7 +197,7 @@ void ce_new(GtkWidget *tv)
 {
 	GtkTextBuffer *tb;
 	GtkTextIter start, end;
-	GtkWidget *notebook;
+	GtkWidget *page, *notebook;
 	gint current_page;
 
 	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
@@ -203,6 +211,10 @@ void ce_new(GtkWidget *tv)
 	gtk_text_buffer_delete(tb, &start, &end);
 
 	current_filename[current_page] = "Untitled";
+
+	// update the notebook page label
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), page, current_filename[current_page]);
 }
 
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
