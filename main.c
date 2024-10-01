@@ -6,6 +6,24 @@
 char *current_filename[21];
 char *filename;
 
+void on_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer user_data) {
+    GtkWidget *win = GTK_WIDGET(user_data);
+    const gchar *title = NULL;
+
+    // Get the label of the currently active tab
+    GtkWidget *label = gtk_notebook_get_tab_label(notebook, page);
+    if (GTK_IS_LABEL(label)) {
+        title = gtk_label_get_text(GTK_LABEL(label));
+    }
+
+    // Set the window title to the label of the active tab
+    if (title) {
+        gtk_window_set_title(GTK_WINDOW(win), title);
+    } else {
+        gtk_window_set_title(GTK_WINDOW(win), "Untitled");
+    }
+}
+
 static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 {
 	GtkWidget *scrolled_window, *label, *sv;
@@ -187,9 +205,11 @@ void ce_text_view_save(GtkWidget *tv)
 
 void ce_open(GtkWidget *tv)
 {
-	GtkWidget *filechooserdialog, *notebook, *page;
+	GtkWidget *win, *filechooserdialog, *notebook, *page;
 	GtkTextBuffer *tb;
 	gint current_page;
+
+    	win = gtk_widget_get_ancestor(GTK_WIDGET (tv), GTK_TYPE_WINDOW);
 
 	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
 	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
@@ -210,6 +230,9 @@ void ce_open(GtkWidget *tv)
 	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
 	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), page, current_filename[current_page]);
 
+	// update the window title too
+	gtk_window_set_title(GTK_WINDOW (win), current_filename[current_page]);
+
 	gtk_widget_destroy(filechooserdialog);
 }
 
@@ -217,8 +240,10 @@ void ce_new(GtkWidget *tv)
 {
 	GtkTextBuffer *tb;
 	GtkTextIter start, end;
-	GtkWidget *page, *notebook;
+	GtkWidget *win, *page, *notebook;
 	gint current_page;
+
+    	win = gtk_widget_get_ancestor (GTK_WIDGET (tv), GTK_TYPE_WINDOW);
 
 	notebook = gtk_widget_get_ancestor(tv, GTK_TYPE_NOTEBOOK);
 	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
@@ -235,6 +260,9 @@ void ce_new(GtkWidget *tv)
 	// update the notebook page label
 	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
 	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), page, current_filename[current_page]);
+
+	// update the window title too
+	gtk_window_set_title(GTK_WINDOW (win), current_filename[current_page]);
 }
 
 static void save_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
@@ -429,6 +457,10 @@ static void activate(GtkApplication *app, gpointer user_data)
 	// Create a notebook for multiple tabs
     	notebook = gtk_notebook_new();
 	gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
+
+
+	// Connect the 'switch-page' signal to change the window title when tabs are switched
+    	g_signal_connect(notebook, "switch-page", G_CALLBACK(on_switch_page), win);
 
 	// Create the first tab manually
     	on_new_tab_clicked(NULL, notebook);
