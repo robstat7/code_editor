@@ -1,23 +1,30 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <string.h>
+#include <gtksourceview/gtksource.h>
 
 char *current_filename[21];
 char *filename;
 
 static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 {
-	GtkWidget *scrolled_window, *label, *tv;
-	GtkTextBuffer *tb;
+	GtkWidget *scrolled_window, *label, *sv;
+	GtkSourceBuffer *sb;
 	gint page_num;
 	
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
-	tv = gtk_text_view_new ();
-	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
-	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
+	// Create a new source buffer and view
+    	sb = gtk_source_buffer_new(NULL);
+    	sv = gtk_source_view_new_with_buffer(sb);
+	// tv = gtk_text_view_new ();
+	// tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	// gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
 
-	gtk_container_add(GTK_CONTAINER(scrolled_window), tv);
+	// Enable line numbers
+    	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(sv), TRUE);
+
+	gtk_container_add(GTK_CONTAINER(scrolled_window), sv);
 
 	// Create a label for the tab
     	label = gtk_label_new("Untitled");
