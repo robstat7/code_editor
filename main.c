@@ -4,6 +4,36 @@
 char *current_filename = NULL;
 char *filename;
 
+static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
+{
+	GtkWidget *scrolled_window, *label, *tv;
+	GtkTextBuffer *tb;
+	gint page_num;
+	
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+
+	tv = gtk_text_view_new ();
+	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
+
+	gtk_container_add(GTK_CONTAINER(scrolled_window), tv);
+
+	// Create a label for the tab
+    	label = gtk_label_new("Untitled");
+
+	// Add the scrolled window (with text view) as a new tab
+	page_num = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scrolled_window, label);
+	gtk_widget_show_all(scrolled_window);
+
+	// Switch to the newly added tab
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_num);
+
+	// connect submenu items to the actions
+	//connect_actions(app, tv);
+}
+
+
+
 static gboolean open_file(char *filename, GtkTextBuffer *tb)
 {	
 	FILE *file;
@@ -222,9 +252,8 @@ static void connect_actions(GtkApplication *app, GtkWidget *tv)
 
 static void activate(GtkApplication *app, gpointer user_data)
 {
-	GtkWidget *win;
-	GtkWidget *tv, *toolbar, *vbox, *new_tab_tool_img;
-	GtkTextBuffer *tb;
+	GtkWidget *win, *notebook;
+	GtkWidget *toolbar, *vbox, *new_tab_tool_img;
 	GtkApplication *application;
 	GMenu *menubar, *menu;
 	GMenuItem *menu_item_file, *menu_item_open, *menu_item_save_as, *menu_item_save, *menu_item;
@@ -241,8 +270,7 @@ static void activate(GtkApplication *app, gpointer user_data)
     	gtk_container_add(GTK_CONTAINER(win), vbox);
 
 
-	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	// gtk_container_add(GTK_CONTAINER(win), scrolledwindow);
+	// GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
 	
 
 	// Adding File menu to the menubar
@@ -286,32 +314,42 @@ static void activate(GtkApplication *app, gpointer user_data)
 	// Set toolbar style (optional: can be icons, text, or both)
     	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
 
-	new_tab_tool_img = gtk_image_new_from_file("resources/new_tab.png");
 
 	// Create "New Tab" button
+	new_tab_tool_img = gtk_image_new_from_file("resources/new_tab.png");
     	new_tab_button = gtk_tool_button_new(new_tab_tool_img, "New Tab");
     	gtk_tool_button_set_label(GTK_TOOL_BUTTON(new_tab_button), "New Tab");
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), new_tab_button, -1);
 
 	// Add the toolbar to the vertical box
     	gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
+
+
+	// Create a notebook for multiple tabs
+    	notebook = gtk_notebook_new();
+	gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
+
+	// Create the first tab manually
+    	on_new_tab_clicked(NULL, notebook);
 	
+	// connect the new tab button to the callback function
+	g_signal_connect(new_tab_button, "clicked", G_CALLBACK(on_new_tab_clicked), notebook);
 
-	tv = gtk_text_view_new ();
-	tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
-	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
+	// tv = gtk_text_view_new ();
+	// tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
+	// gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
 
-	gtk_container_add(GTK_CONTAINER(scrolledwindow), tv);
+	// gtk_container_add(GTK_CONTAINER(scrolledwindow), tv);
 
 	// Add the scrolled window (with the text view) to the vertical box
-	gtk_box_pack_start(GTK_BOX(vbox), scrolledwindow, TRUE, TRUE, 0);
+	// gtk_box_pack_start(GTK_BOX(vbox), scrolledwindow, TRUE, TRUE, 0);
 
 	// gtk_container_add(GTK_CONTAINER(win), tv);
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
 
 	// connect submenu items to the actions
-	connect_actions(app, tv);
+	// connect_actions(app, tv);
 }
 
 int main(int argc, char **argv)
