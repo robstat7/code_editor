@@ -364,9 +364,39 @@ static void new_activated(GSimpleAction *action, GVariant *parameter, gpointer u
 	ce_new(tv);
 }
 
+static void undo_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *sv;
+	GtkSourceUndoManager *undo_manager;
+	GtkSourceBuffer *sb;
+
+	printf("Undo submenu clicked!!!\n");
+	
+	notebook = user_data;
+											   
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+											   
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+											   
+	// Get the child of the scrolled window (which is the source view)
+	sv = gtk_bin_get_child(GTK_BIN(scrolled_window));
+
+	sb = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv)));
+
+	// Get the undo manager from the source buffer
+	undo_manager = gtk_source_buffer_get_undo_manager(sb);
+
+	if (gtk_source_undo_manager_can_undo(undo_manager)) {
+        gtk_source_undo_manager_undo(undo_manager);
+    }
+
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
-	GSimpleAction *act_saveas, *act_save, *act_new;
+	GSimpleAction *act_saveas, *act_save, *act_new, *act_undo;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -384,6 +414,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	GSimpleAction *act_open = g_simple_action_new("open", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_open));
 
+	// create an action undo
+	act_undo = g_simple_action_new("undo", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_undo));
+
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
 
@@ -395,6 +429,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action save
 	g_signal_connect (act_save, "activate", G_CALLBACK (save_activated), notebook);
+
+	// connect the action undo 
+	g_signal_connect (act_undo, "activate", G_CALLBACK (undo_activated), notebook);
 }
 
 
@@ -404,7 +441,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GtkWidget *toolbar, *vbox, *new_tab_tool_img;
 	GtkApplication *application;
 	GMenu *menubar, *menu;
-	GMenuItem *menu_item_file, *menu_item_open, *menu_item_save_as, *menu_item_save, *menu_item;
+	GMenuItem *menu_item_file, *menu_item_edit, *menu_item_open, *menu_item_save_as, *menu_item_save, *menu_item_undo, *menu_item_redo, *menu_item;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -417,9 +454,6 @@ static void activate(GtkApplication *app, gpointer user_data)
     	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     	gtk_container_add(GTK_CONTAINER(win), vbox);
 
-
-	// GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	
 
 	// Adding File menu to the menubar
 	menubar = g_menu_new ();
@@ -453,6 +487,28 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 	g_menu_append_item (menubar, menu_item_file);
 	g_object_unref (menu_item_file);
+
+
+	// Adding edit menu to the menubar	
+	menu_item_edit = g_menu_item_new ("Edit", NULL);
+	menu = g_menu_new ();
+
+	// Creating undo submenu in the edit menu
+	menu_item_undo = g_menu_item_new ("Undo		C+z", "app.undo");
+	g_menu_append_item (menu, menu_item_undo);
+	g_object_unref (menu_item_undo);
+
+	// Creating redo submenu in the edit menu
+	menu_item_redo = g_menu_item_new ("Redo		C+Z", "app.redo");
+	g_menu_append_item (menu, menu_item_redo);
+	g_object_unref (menu_item_redo);
+
+	g_menu_item_set_submenu (menu_item_edit, G_MENU_MODEL (menu));
+	g_object_unref (menu);
+
+	g_menu_append_item (menubar, menu_item_edit);
+	g_object_unref (menu_item_edit);
+
 	
 	gtk_application_set_menubar (GTK_APPLICATION (application), G_MENU_MODEL (menubar)); 
 	
@@ -487,16 +543,6 @@ static void activate(GtkApplication *app, gpointer user_data)
 	// connect the new tab button to the callback function
 	g_signal_connect(new_tab_button, "clicked", G_CALLBACK(on_new_tab_clicked), notebook);
 
-	// tv = gtk_text_view_new ();
-	// tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
-	// gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
-
-	// gtk_container_add(GTK_CONTAINER(scrolledwindow), tv);
-
-	// Add the scrolled window (with the text view) to the vertical box
-	// gtk_box_pack_start(GTK_BOX(vbox), scrolledwindow, TRUE, TRUE, 0);
-
-	// gtk_container_add(GTK_CONTAINER(win), tv);
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
 
