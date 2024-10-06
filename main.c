@@ -424,6 +424,34 @@ static void redo_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 
 }
 
+static void cut_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *sv;
+	GtkSourceUndoManager *undo_manager;
+	GtkTextBuffer *tb;
+	GtkClipboard *clipboard;
+
+	printf("Cut submenu clicked!!!\n");
+	
+	notebook = user_data;
+											   
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+											   
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+											   
+	// Get the child of the scrolled window (which is the source view)
+	sv = gtk_bin_get_child(GTK_BIN(scrolled_window));
+
+	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv));
+	
+	clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+
+	// Cut the selected text to the clipboard
+	gtk_text_buffer_cut_clipboard(tb, clipboard, TRUE);
+}
+
 // Callback function to show the About dialog
 void about_activated(GtkWidget *widget, gpointer data) {
     GtkWidget *about_dialog;
@@ -433,7 +461,7 @@ void about_activated(GtkWidget *widget, gpointer data) {
 
     // Set information about the application
     gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_dialog), "Sataswaroop Text Editor");
-    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "0.5");
+    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "version 0.5");
     gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_dialog), "© 2024 Neanchhar Private Limited");
     gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(about_dialog), "A simple text editor for writing text and code.");
     
@@ -450,7 +478,7 @@ void about_activated(GtkWidget *widget, gpointer data) {
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
-		      *act_undo;
+		      *act_undo, *act_cut;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -476,9 +504,14 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	act_redo = g_simple_action_new("redo", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_redo));
 
+	// create an action cut
+	act_cut = g_simple_action_new("cut", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_cut));
+
 	// create an action about
 	act_about = g_simple_action_new("about", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_about));
+
 
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
@@ -498,6 +531,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	// connect the action redo 
 	g_signal_connect (act_redo, "activate", G_CALLBACK (redo_activated), notebook);
 
+	// connect the action redo 
+	g_signal_connect (act_cut, "activate", G_CALLBACK (cut_activated), notebook);
+
 	// connect the action about
 	g_signal_connect (act_about, "activate", G_CALLBACK (about_activated), NULL);
 }
@@ -512,7 +548,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GMenuItem *menu_item_file, *menu_item_edit, *menu_item_open,
 		  *menu_item_save_as, *menu_item_save, *menu_item_undo,
 		  *menu_item_redo, *menu_item, *menu_item_help,
-		  *menu_item_about;
+		  *menu_item_about, *menu_item_cut;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -573,6 +609,11 @@ static void activate(GtkApplication *app, gpointer user_data)
 	menu_item_redo = g_menu_item_new ("Redo		C+Z", "app.redo");
 	g_menu_append_item (menu, menu_item_redo);
 	g_object_unref (menu_item_redo);
+
+	// Creating cut submenu in the edit menu
+	menu_item_cut = g_menu_item_new ("Cut		C+x", "app.cut");
+	g_menu_append_item (menu, menu_item_cut);
+	g_object_unref (menu_item_cut);
 
 	g_menu_item_set_submenu (menu_item_edit, G_MENU_MODEL (menu));
 	g_object_unref (menu);
