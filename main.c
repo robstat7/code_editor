@@ -401,7 +401,7 @@ static void redo_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 	GtkSourceUndoManager *undo_manager;
 	GtkSourceBuffer *sb;
 
-	printf("Undo submenu clicked!!!\n");
+	printf("Redo submenu clicked!!!\n");
 	
 	notebook = user_data;
 											   
@@ -424,9 +424,33 @@ static void redo_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 
 }
 
+// Callback function to show the About dialog
+void about_activated(GtkWidget *widget, gpointer data) {
+    GtkWidget *about_dialog;
+
+    // Create a new about dialog
+    about_dialog = gtk_about_dialog_new();
+
+    // Set information about the application
+    gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_dialog), "Sataswaroop Text Editor");
+    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "0.5");
+    gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_dialog), "© 2024 Neanchhar Private Limited");
+    gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(about_dialog), "A simple text editor for writing text and code.");
+    
+    const gchar *authors[] = {"Dileep Sankhla", NULL};
+    gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(about_dialog), authors);
+
+    // Show the about dialog
+    gtk_dialog_run(GTK_DIALOG(about_dialog));
+
+    // Destroy the dialog after closing
+    gtk_widget_destroy(about_dialog);
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
-	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_undo;
+	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
+		      *act_undo;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -452,6 +476,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	act_redo = g_simple_action_new("redo", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_redo));
 
+	// create an action about
+	act_about = g_simple_action_new("about", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_about));
+
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
 
@@ -469,6 +497,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action redo 
 	g_signal_connect (act_redo, "activate", G_CALLBACK (redo_activated), notebook);
+
+	// connect the action about
+	g_signal_connect (act_about, "activate", G_CALLBACK (about_activated), NULL);
 }
 
 
@@ -478,7 +509,10 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GtkWidget *toolbar, *vbox, *new_tab_tool_img;
 	GtkApplication *application;
 	GMenu *menubar, *menu;
-	GMenuItem *menu_item_file, *menu_item_edit, *menu_item_open, *menu_item_save_as, *menu_item_save, *menu_item_undo, *menu_item_redo, *menu_item;
+	GMenuItem *menu_item_file, *menu_item_edit, *menu_item_open,
+		  *menu_item_save_as, *menu_item_save, *menu_item_undo,
+		  *menu_item_redo, *menu_item, *menu_item_help,
+		  *menu_item_about;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -545,6 +579,22 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 	g_menu_append_item (menubar, menu_item_edit);
 	g_object_unref (menu_item_edit);
+
+
+	// Adding help menu to the menubar	
+	menu_item_help = g_menu_item_new ("Help", NULL);
+	menu = g_menu_new ();
+
+	// Creating about submenu in the help menu
+	menu_item_about = g_menu_item_new ("About Sataswaroop Text Editor...", "app.about");
+	g_menu_append_item (menu, menu_item_about);
+	g_object_unref (menu_item_about);
+
+	g_menu_item_set_submenu (menu_item_help, G_MENU_MODEL (menu));
+	g_object_unref (menu);
+
+	g_menu_append_item (menubar, menu_item_help);
+	g_object_unref (menu_item_help);
 
 	
 	gtk_application_set_menubar (GTK_APPLICATION (application), G_MENU_MODEL (menubar)); 
