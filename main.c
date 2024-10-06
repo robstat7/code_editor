@@ -505,6 +505,10 @@ static void paste_activated(GSimpleAction *action, GVariant *parameter, gpointer
 	gtk_text_buffer_paste_clipboard(tb, clipboard, NULL, TRUE);
 }
 
+void exit_activated(GtkWidget *widget, gpointer data) {
+	exit(0);
+}
+
 // Callback function to show the About dialog
 void about_activated(GtkWidget *widget, gpointer data) {
     GtkWidget *about_dialog;
@@ -528,10 +532,20 @@ void about_activated(GtkWidget *widget, gpointer data) {
     gtk_widget_destroy(about_dialog);
 }
 
+// Callback function to handle key press events
+gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
+    // Check for Ctrl+Q
+    if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_q) {
+	exit_activated(NULL, NULL);
+        return TRUE;     // Event handled
+    }
+    return FALSE; // Event not handled
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
-		      *act_undo, *act_cut, *act_copy, *act_paste;
+		      *act_undo, *act_cut, *act_copy, *act_paste, *act_exit;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -573,6 +587,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	act_about = g_simple_action_new("about", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_about));
 
+	// create an action exit
+	act_exit = g_simple_action_new("exit", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_exit));
+
 
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
@@ -603,6 +621,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action paste
 	g_signal_connect (act_paste, "activate", G_CALLBACK (paste_activated), notebook);
+
+	// connect the action exit
+	g_signal_connect (act_exit, "activate", G_CALLBACK (exit_activated), NULL);
 }
 
 static void activate(GtkApplication *app, gpointer user_data)
@@ -615,7 +636,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 		  *menu_item_save_as, *menu_item_save, *menu_item_undo,
 		  *menu_item_redo, *menu_item, *menu_item_help,
 		  *menu_item_about, *menu_item_cut, *menu_item_copy,
-		  *menu_item_paste;
+		  *menu_item_paste, *menu_item_exit;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -655,6 +676,11 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_menu_append_item (menu, menu_item_save);
 	g_object_unref (menu_item_save);
 	
+	// Creating Exit submenu in the File menu
+	menu_item_exit = g_menu_item_new ("Exit		C+q", "app.exit");
+	g_menu_append_item (menu, menu_item_exit);
+	g_object_unref (menu_item_exit);
+
 	
 	g_menu_item_set_submenu (menu_item_file, G_MENU_MODEL (menu));
 	g_object_unref (menu);
@@ -748,6 +774,10 @@ static void activate(GtkApplication *app, gpointer user_data)
 	
 	// connect the new tab button to the callback function
 	g_signal_connect(new_tab_button, "clicked", G_CALLBACK(on_new_tab_clicked), notebook);
+
+
+	// Connect the "key-press-event" signal to the callback function
+    	g_signal_connect(win, "key-press-event", G_CALLBACK(on_key_press), NULL);
 
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
