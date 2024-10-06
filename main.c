@@ -541,6 +541,12 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s) {	/* save shortcut */
 	    save_activated(NULL, NULL, data);
 	    return TRUE;
+    } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_o) {	/* open shortcut */
+	    open_activated(NULL, NULL, data);
+	    return TRUE;
+    } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n) {	/* new shortcut */
+	    new_activated(NULL, NULL, data);
+	    return TRUE;
     }
 
     return FALSE; // Event not handled
@@ -661,12 +667,12 @@ static void activate(GtkApplication *app, gpointer user_data)
 	menu = g_menu_new ();
 
 	// Creating New submenu in the File menu
-	menu_item = g_menu_item_new ("New", "app.new");
+	menu_item = g_menu_item_new ("New		C+n", "app.new");
 	g_menu_append_item (menu, menu_item);
 	g_object_unref (menu_item);
 
 	// create "open" submenu in the "file" menu
-	menu_item_open = g_menu_item_new("Open...", "app.open");
+	menu_item_open = g_menu_item_new("Open...		C+o", "app.open");
 	g_menu_append_item(menu, menu_item_open);
 	g_object_unref(menu_item_open);
 
