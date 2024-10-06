@@ -673,7 +673,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_object_unref (menu_item);
 
 	// create "open" submenu in the "file" menu
-	menu_item_open = g_menu_item_new("Open...		C+o", "app.open");
+	menu_item_open = g_menu_item_new("Open...	C+o", "app.open");
 	g_menu_append_item(menu, menu_item_open);
 	g_object_unref(menu_item_open);
 
@@ -767,6 +767,9 @@ static void activate(GtkApplication *app, gpointer user_data)
     	new_tab_button = gtk_tool_button_new(new_tab_tool_img, "New Tab");
     	gtk_tool_button_set_label(GTK_TOOL_BUTTON(new_tab_button), "New Tab");
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), new_tab_button, -1);
+
+	// Set the tooltip for the New tab button
+    	gtk_widget_set_tooltip_text(GTK_WIDGET(new_tab_button), "New Tab C+t");
 
 	// Add the toolbar to the vertical box
     	gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
