@@ -39,9 +39,6 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 	// Create a new source buffer and view
     	sb = gtk_source_buffer_new(NULL);
     	sv = gtk_source_view_new_with_buffer(sb);
-	// tv = gtk_text_view_new ();
-	// tb = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
-	// gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv), GTK_WRAP_WORD_CHAR);
 
 	// Enable line numbers
     	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(sv), TRUE);
@@ -547,7 +544,11 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n) {	/* new shortcut */
 	    new_activated(NULL, NULL, data);
 	    return TRUE;
+    } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_t) {	/* new tab shortcut */
+	    on_new_tab_clicked(NULL, data);
+	    return TRUE;
     }
+
 
     return FALSE; // Event not handled
 }
