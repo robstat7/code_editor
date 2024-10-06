@@ -621,7 +621,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	application = GTK_APPLICATION (app);
 	win = gtk_application_window_new(GTK_APPLICATION (application));
 	gtk_window_set_title (GTK_WINDOW (win), "Code Editor");
-	gtk_window_set_default_size (GTK_WINDOW (win), 800, 600);
+	gtk_window_set_default_size (GTK_WINDOW (win), 1500, 1000);
 
 
 	// Create a vertical box to pack the toolbar and other widgets
@@ -751,6 +751,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
+	gtk_window_maximize(GTK_WINDOW(win));
+
 
 	// connect submenu items to the actions
 	connect_actions(app, notebook);
