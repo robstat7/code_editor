@@ -480,6 +480,31 @@ static void cut_activated(GSimpleAction *action, GVariant *parameter, gpointer u
 	gtk_text_buffer_cut_clipboard(tb, clipboard, TRUE);
 }
 
+static void paste_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *sv;
+	GtkSourceUndoManager *undo_manager;
+	GtkTextBuffer *tb;
+	GtkClipboard *clipboard;
+
+	notebook = user_data;
+											   
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+											   
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+											   
+	// Get the child of the scrolled window (which is the source view)
+	sv = gtk_bin_get_child(GTK_BIN(scrolled_window));
+
+	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv));
+	
+	clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+
+	gtk_text_buffer_paste_clipboard(tb, clipboard, NULL, TRUE);
+}
+
 // Callback function to show the About dialog
 void about_activated(GtkWidget *widget, gpointer data) {
     GtkWidget *about_dialog;
@@ -506,7 +531,7 @@ void about_activated(GtkWidget *widget, gpointer data) {
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
-		      *act_undo, *act_cut, *act_copy;
+		      *act_undo, *act_cut, *act_copy, *act_paste;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -539,6 +564,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	// create an action copy
 	act_copy = g_simple_action_new("copy", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_copy));
+	
+	// create an action paste
+	act_paste = g_simple_action_new("paste", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_paste));
 
 	// create an action about
 	act_about = g_simple_action_new("about", NULL);
@@ -571,8 +600,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action copy
 	g_signal_connect (act_copy, "activate", G_CALLBACK (copy_activated), notebook);
-}
 
+	// connect the action paste
+	g_signal_connect (act_paste, "activate", G_CALLBACK (paste_activated), notebook);
+}
 
 static void activate(GtkApplication *app, gpointer user_data)
 {
@@ -583,7 +614,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 	GMenuItem *menu_item_file, *menu_item_edit, *menu_item_open,
 		  *menu_item_save_as, *menu_item_save, *menu_item_undo,
 		  *menu_item_redo, *menu_item, *menu_item_help,
-		  *menu_item_about, *menu_item_cut, *menu_item_copy;
+		  *menu_item_about, *menu_item_cut, *menu_item_copy,
+		  *menu_item_paste;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -654,6 +686,12 @@ static void activate(GtkApplication *app, gpointer user_data)
 	menu_item_copy = g_menu_item_new ("Copy		C+c", "app.copy");
 	g_menu_append_item (menu, menu_item_copy);
 	g_object_unref (menu_item_copy);
+
+	// Creating paste submenu in the edit menu
+	menu_item_paste = g_menu_item_new ("Paste		C+v", "app.paste");
+	g_menu_append_item (menu, menu_item_paste);
+	g_object_unref (menu_item_paste);
+
 
 	g_menu_item_set_submenu (menu_item_edit, G_MENU_MODEL (menu));
 	g_object_unref (menu);
