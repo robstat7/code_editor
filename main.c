@@ -394,9 +394,39 @@ static void undo_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 
 }
 
+static void redo_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+	gint current_page;
+	GtkWidget *notebook, *scrolled_window, *sv;
+	GtkSourceUndoManager *undo_manager;
+	GtkSourceBuffer *sb;
+
+	printf("Undo submenu clicked!!!\n");
+	
+	notebook = user_data;
+											   
+	current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+											   
+	// Get the current page widget (which is the scrolled window)
+	scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+											   
+	// Get the child of the scrolled window (which is the source view)
+	sv = gtk_bin_get_child(GTK_BIN(scrolled_window));
+
+	sb = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv)));
+
+	// Get the undo manager from the source buffer
+	undo_manager = gtk_source_buffer_get_undo_manager(sb);
+
+	if (gtk_source_undo_manager_can_redo(undo_manager)) {
+        gtk_source_undo_manager_redo(undo_manager);
+    }
+
+}
+
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
-	GSimpleAction *act_saveas, *act_save, *act_new, *act_undo;
+	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_undo;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -418,6 +448,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	act_undo = g_simple_action_new("undo", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_undo));
 
+	// create an action redo 
+	act_redo = g_simple_action_new("redo", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_redo));
+
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
 
@@ -432,6 +466,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action undo 
 	g_signal_connect (act_undo, "activate", G_CALLBACK (undo_activated), notebook);
+
+	// connect the action redo 
+	g_signal_connect (act_redo, "activate", G_CALLBACK (redo_activated), notebook);
 }
 
 
