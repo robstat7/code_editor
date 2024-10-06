@@ -538,7 +538,11 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
     if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_q) {
 	exit_activated(NULL, NULL);
         return TRUE;     // Event handled
+    } else if ((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s) {	/* save shortcut */
+	    save_activated(NULL, NULL, data);
+	    return TRUE;
     }
+
     return FALSE; // Event not handled
 }
 
@@ -672,7 +676,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_object_unref (menu_item_save_as);
 
 	// Creating Save submenu in the File menu
-	menu_item_save = g_menu_item_new ("Save", "app.save");
+	menu_item_save = g_menu_item_new ("Save		C+s", "app.save");
 	g_menu_append_item (menu, menu_item_save);
 	g_object_unref (menu_item_save);
 	
@@ -777,7 +781,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 
 	// Connect the "key-press-event" signal to the callback function
-    	g_signal_connect(win, "key-press-event", G_CALLBACK(on_key_press), NULL);
+    	g_signal_connect(win, "key-press-event", G_CALLBACK(on_key_press), notebook);
 
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_widget_show_all(win);
