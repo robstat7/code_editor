@@ -384,6 +384,21 @@ static void open_activated(GSimpleAction *action, GVariant *parameter, gpointer 
 	ce_open(tv);
 }
 
+static void close_activated(GSimpleAction *action, GVariant *parameter, gpointer notebook)
+{
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+    // Ensure there is a page to close
+    if (current_page == -1) {
+        g_print("No page to close!\n");
+        return;
+    }
+
+    // Remove the current page
+    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), current_page);
+    g_print("Closed page: %d\n", current_page);
+}
+
 static void new_activated(GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
 	gint current_page;
@@ -605,7 +620,7 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
 		      *act_undo, *act_cut, *act_copy, *act_paste, *act_exit,
-		      *act_find;
+		      *act_find, *act_close_tab;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -654,6 +669,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	// create an action find
 	act_find = g_simple_action_new("find", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_find));
+	
+	// create an action close tab
+	act_close_tab = g_simple_action_new("close", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_close_tab));
 
 
 	// connect the action new
@@ -691,6 +710,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action find
 	g_signal_connect (act_find, "activate", G_CALLBACK (find_activated), notebook);
+
+	// connect the action close tab
+	g_signal_connect (act_close_tab, "activate", G_CALLBACK (close_activated), notebook);
 }
 
 static void activate(GtkApplication *app, gpointer user_data)
@@ -704,7 +726,7 @@ static void activate(GtkApplication *app, gpointer user_data)
 		  *menu_item_redo, *menu_item, *menu_item_help,
 		  *menu_item_about, *menu_item_cut, *menu_item_copy,
 		  *menu_item_paste, *menu_item_exit, *menu_item_search,
-		  *menu_item_find;
+		  *menu_item_find, *menu_item_close_tab;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -744,6 +766,11 @@ static void activate(GtkApplication *app, gpointer user_data)
 	g_menu_append_item (menu, menu_item_save);
 	g_object_unref (menu_item_save);
 	
+	// Creating close tab submenu in the File menu
+	menu_item_close_tab = g_menu_item_new ("Close Tab	C+w", "app.close");
+	g_menu_append_item (menu, menu_item_close_tab);
+	g_object_unref (menu_item_close_tab);
+
 	// Creating Exit submenu in the File menu
 	menu_item_exit = g_menu_item_new ("Exit		C+q", "app.exit");
 	g_menu_append_item (menu, menu_item_exit);
