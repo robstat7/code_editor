@@ -9,16 +9,19 @@ char *filename;
 /* function to display the find dialog */
 void show_find_dialog(GtkWidget *widget, gpointer user_data)
 {
-	GtkWidget *entry, *notebook, *current_page, *dialog, *content_area;
-	GtkSourceView *sv;
-	GtkSourceBuffer *sb;
-	gint result;
+	GtkWidget *scrolled_window, *tv, *entry, *notebook, *dialog, *content_area;
+	gint current_page, result;
 	const gchar *text_to_find;
 
 	notebook = user_data;
-	current_page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)));
-	sv = GTK_SOURCE_VIEW(gtk_bin_get_child(GTK_BIN(current_page)));
-	sb = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv)));
+
+        current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+
+        // Get the current page widget (which is the scrolled window)
+        scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), current_page);
+
+        // Get the child of the scrolled window (which is the text view)
+        tv = gtk_bin_get_child(GTK_BIN(scrolled_window));
 
 	/* create a dialog to input the search string */
 	dialog = gtk_dialog_new_with_buttons("Find Text",
@@ -42,7 +45,7 @@ void show_find_dialog(GtkWidget *widget, gpointer user_data)
 	if(result == GTK_RESPONSE_OK) {
 	    text_to_find = gtk_entry_get_text(GTK_ENTRY(entry));
 	    if(text_to_find && *text_to_find != '\0') {
-		    // find_all_occurrences(buffer, text_to_find);
+		    // find_text_in_page(tv, text_to_find);
 	    }
 	}
 	
@@ -129,9 +132,6 @@ static void on_new_tab_clicked(GtkWidget *widget, gpointer notebook)
 
 	// Switch to the newly added tab
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_num);
-
-	// connect submenu items to the actions
-	//connect_actions(app, tv);
 }
 
 
