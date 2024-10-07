@@ -6,6 +6,49 @@
 char *current_filename[21];
 char *filename;
 
+/* function to display the find dialog */
+void show_find_dialog(GtkWidget *widget, gpointer user_data)
+{
+	GtkWidget *entry, *notebook, *current_page, *dialog, *content_area;
+	GtkSourceView *sv;
+	GtkSourceBuffer *sb;
+	gint result;
+	const gchar *text_to_find;
+
+	notebook = user_data;
+	current_page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)));
+	sv = GTK_SOURCE_VIEW(gtk_bin_get_child(GTK_BIN(current_page)));
+	sb = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(sv)));
+
+	/* create a dialog to input the search string */
+	dialog = gtk_dialog_new_with_buttons("Find Text",
+					     GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+					     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					     "_OK",
+					     GTK_RESPONSE_OK,
+					     "_Cancel",
+					     GTK_RESPONSE_CANCEL,
+					     NULL);
+
+	content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+	/* create an entry widget to accept the search term */
+	entry = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(content_area), entry, TRUE, TRUE, 0);
+	gtk_widget_show(entry);
+
+	/* run the dialog and get user input */
+	result = gtk_dialog_run(GTK_DIALOG(dialog));
+	if(result == GTK_RESPONSE_OK) {
+	    text_to_find = gtk_entry_get_text(GTK_ENTRY(entry));
+	    if(text_to_find && *text_to_find != '\0') {
+		    // find_all_occurrences(buffer, text_to_find);
+	    }
+	}
+	
+	gtk_widget_destroy(dialog);
+}
+
 void on_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer user_data) {
     GtkWidget *win = GTK_WIDGET(user_data);
     const gchar *title = NULL;
@@ -502,6 +545,11 @@ static void paste_activated(GSimpleAction *action, GVariant *parameter, gpointer
 	gtk_text_buffer_paste_clipboard(tb, clipboard, NULL, TRUE);
 }
 
+void find_activated(GtkWidget *widget, gpointer notebook)
+{
+	show_find_dialog(widget, notebook);
+}
+
 void exit_activated(GtkWidget *widget, gpointer data) {
 	exit(0);
 }
@@ -556,7 +604,8 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer data) {
 static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 {
 	GSimpleAction *act_redo, *act_saveas, *act_save, *act_new, *act_about,
-		      *act_undo, *act_cut, *act_copy, *act_paste, *act_exit;
+		      *act_undo, *act_cut, *act_copy, *act_paste, *act_exit,
+		      *act_find;
 
 	// create an action new 
 	act_new = g_simple_action_new("new", NULL);
@@ -602,6 +651,10 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 	act_exit = g_simple_action_new("exit", NULL);
 	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_exit));
 
+	// create an action find
+	act_find = g_simple_action_new("find", NULL);
+	g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(act_find));
+
 
 	// connect the action new
 	g_signal_connect(act_new, "activate", G_CALLBACK (new_activated), notebook);
@@ -635,6 +688,9 @@ static void connect_actions(GtkApplication *app, GtkWidget *notebook)
 
 	// connect the action exit
 	g_signal_connect (act_exit, "activate", G_CALLBACK (exit_activated), NULL);
+
+	// connect the action find
+	g_signal_connect (act_find, "activate", G_CALLBACK (find_activated), notebook);
 }
 
 static void activate(GtkApplication *app, gpointer user_data)
@@ -647,7 +703,8 @@ static void activate(GtkApplication *app, gpointer user_data)
 		  *menu_item_save_as, *menu_item_save, *menu_item_undo,
 		  *menu_item_redo, *menu_item, *menu_item_help,
 		  *menu_item_about, *menu_item_cut, *menu_item_copy,
-		  *menu_item_paste, *menu_item_exit;
+		  *menu_item_paste, *menu_item_exit, *menu_item_search,
+		  *menu_item_find;
 	GtkToolItem *new_tab_button;
 
 	application = GTK_APPLICATION (app);
@@ -735,6 +792,23 @@ static void activate(GtkApplication *app, gpointer user_data)
 
 	g_menu_append_item (menubar, menu_item_edit);
 	g_object_unref (menu_item_edit);
+
+
+	// Adding search menu to the menubar	
+	menu_item_search = g_menu_item_new ("Search", NULL);
+	menu = g_menu_new();
+
+	// Creating find submenu in the search menu
+	menu_item_find = g_menu_item_new ("Find...		C+f", "app.find");
+	g_menu_append_item (menu, menu_item_find);
+	g_object_unref (menu_item_find);
+
+	g_menu_item_set_submenu (menu_item_search, G_MENU_MODEL (menu));
+	g_object_unref (menu);
+
+	g_menu_append_item (menubar, menu_item_search);
+	g_object_unref (menu_item_search);
+
 
 
 	// Adding help menu to the menubar	
